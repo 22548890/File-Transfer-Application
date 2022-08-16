@@ -5,6 +5,7 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.net.Socket;
+import java.util.concurrent.TimeUnit;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
@@ -16,40 +17,53 @@ public class File_Client {
 
     public static void main(String[] args) {
         final File[] fileToSend = new File[1];
-
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         JFrame jframe = new JFrame("File Transfer File_Client");
 
-        jframe.setSize(450, 450);
+        jframe.setSize(500, 350);
         jframe.setLayout(new BoxLayout(jframe.getContentPane(), BoxLayout.Y_AXIS));
         jframe.setDefaultCloseOperation(jframe.EXIT_ON_CLOSE);
 
         JLabel jTitle = new JLabel("File Transfer Sender");
-        jTitle.setFont(new Font("Arial", Font.BOLD, 25));
-        jTitle.setBorder(BorderFactory.createEmptyBorder(20, 0, 10, 0));
+        jTitle.setFont(new Font("Serif", Font.BOLD, 25));
+        jTitle.setBorder(BorderFactory.createEmptyBorder(15, 0, 10, 0));
         jTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JLabel JFileName = new JLabel("Choose a file to send");
-        JFileName.setFont(new Font("Arial", Font.BOLD, 20));
-        JFileName.setBorder(BorderFactory.createEmptyBorder(50, 0, 0, 0));
-        JFileName.setAlignmentX(Component.RIGHT_ALIGNMENT);
+        JLabel JFileName = new JLabel("Select file and protocol");
+        JFileName.setFont(new Font("Serif", Font.PLAIN, 18));
+        JFileName.setBorder(BorderFactory.createEmptyBorder(70, 0, 0, 0));
+        JFileName.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JPanel jpButton = new JPanel();
-        jpButton.setBorder(BorderFactory.createEmptyBorder(75, 0, 10, 0));
+        jpButton.setBorder(BorderFactory.createEmptyBorder(70, 0, 10, 0));
 
-        JButton btnSend = new JButton("Send File");
-        btnSend.setPreferredSize(new Dimension(150, 75));
+        JButton btnSendTCP = new JButton("Send File through TCP");
+        btnSendTCP.setFont(new Font("Serif", Font.BOLD, 12));
+        btnSendTCP.setPreferredSize(new Dimension(155, 75));
+
+        JButton btnSendUDP = new JButton("Send File through UDP");
+        btnSendUDP.setFont(new Font("Serif", Font.BOLD, 12));
+        btnSendUDP.setPreferredSize(new Dimension(155, 75));
 
         JButton btnChooseFile = new JButton("Choose File");
-        btnChooseFile.setPreferredSize(new Dimension(150, 75));
+        btnChooseFile.setFont(new Font("Serif", Font.BOLD, 18));
+        btnChooseFile.setPreferredSize(new Dimension(140, 75));
+        btnChooseFile.setBackground(Color.GREEN);
+        btnChooseFile.setForeground(Color.GREEN);
 
-        jpButton.add(btnSend);
         jpButton.add(btnChooseFile);
+        jpButton.add(btnSendTCP);
+        jpButton.add(btnSendUDP);
 
         btnChooseFile.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 JFileChooser jFileChooser = new JFileChooser();
-                jFileChooser.setDialogTitle("Choose file to send");
+                jFileChooser.setDialogTitle("Select file and protocol");
 
                 if (jFileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
                     fileToSend[0] = jFileChooser.getSelectedFile();
@@ -59,36 +73,73 @@ public class File_Client {
 
         });
 
-        btnSend.addActionListener(new ActionListener() {
+        btnSendTCP.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (fileToSend[0] == null) {
                     JFileName.setText("Please choose a file first.");
                 } else {
                     try {
-                        FileInputStream fileInputStream = new FileInputStream(fileToSend[0].getAbsolutePath());
-                        Socket socket = new Socket("localhost", 1234);
+                        String ip = JOptionPane.showInputDialog("Enter the IP address: ", "localhost");
+                        if (ip == null) {
+                            System.exit(0);
+                        }
+                        String port = JOptionPane.showInputDialog("Enter the port number: ", "1234");
+                        if (port == null) {
+                            System.exit(0);
+                        }
+                        // Timeout timeout = new Timeout();
+                        // Thread t = new Thread(timeout);
+                        // t.start();
+                        Socket socket = new Socket(ip, Integer.parseInt(port));
+                        // t.interrupt();
+                        FileInputStream fileIn = new FileInputStream(fileToSend[0].getAbsolutePath());
+                        if (socket.isConnected()) {
+                            DataOutputStream dOut = new DataOutputStream(socket.getOutputStream());
 
-                        DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+                            String fileName = fileToSend[0].getName();
+                            byte[] fileNameBytes = fileName.getBytes();
 
-                        String fileName = fileToSend[0].getName();
-                        byte[] fileNameBytes = fileName.getBytes();
+                            byte[] fileContentBytes = new byte[(int) fileToSend[0].length()];
+                            fileIn.read(fileNameBytes);
 
-                        byte[] fileContentBytes = new byte[(int) fileToSend[0].length()];
-                        fileInputStream.read(fileNameBytes);
+                            dOut.writeInt(fileNameBytes.length);
+                            dOut.write(fileNameBytes);
 
-                        dataOutputStream.writeInt(fileNameBytes.length);
-                        dataOutputStream.write(fileNameBytes);
+                            dOut.writeInt(fileContentBytes.length);
+                            dOut.write(fileContentBytes);
+                        } else {
+                            JFileName.setText("Please connect to the server first.");
+                        }
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(null, "Invalid IP address or invalid port number",
+                                "SERVER NOT FOUND", JOptionPane.ERROR_MESSAGE);
+                        JFileName.setText("Please connect to the server first.");
+                    }
 
-                        dataOutputStream.writeInt(fileContentBytes.length);
-                        dataOutputStream.write(fileContentBytes);
+                }
+            }
+
+        });
+
+        btnSendUDP.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // btnSendUDP.setText("Send File through UDP");
+                // btnSendUDP.setEnabled(true);
+                if (fileToSend[0] == null) {
+                    JFileName.setText("Please choose a file first.");
+                } else {
+                    try {
+                        // udp tings
+                        btnSendUDP.setText("Sending...");
+                        btnSendUDP.setEnabled(false);
                     } catch (Exception ex) {
                         ex.printStackTrace();
                     }
 
                 }
             }
-
         });
 
         jframe.add(jTitle);

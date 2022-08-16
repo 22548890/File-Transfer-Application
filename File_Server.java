@@ -23,15 +23,21 @@ import javax.swing.border.EmptyBorder;
 
 public class File_Server {
     static ArrayList<MyFile> myFiles = new ArrayList<>();
+    private static Socket socket;
+    private static ServerSocket serverSocket;
 
     public static void main(String[] args) throws IOException {
 
         int fileId = 0;
-
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         JFrame jFrame = new JFrame("File Transfer Server");
         jFrame.setSize(450, 450);
         jFrame.setLayout(new BoxLayout(jFrame.getContentPane(), BoxLayout.Y_AXIS));
-        jFrame.setDefaultCloseOperation(jFrame.EXIT_ON_CLOSE);
+        jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         JPanel jPanel = new JPanel();
         jPanel.setLayout(new BoxLayout(jPanel, BoxLayout.Y_AXIS));
@@ -40,7 +46,7 @@ public class File_Server {
         jScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
         JLabel jTitle = new JLabel("File Transfer Receiver");
-        jTitle.setFont(new Font("Arial", Font.BOLD, 25));
+        jTitle.setFont(new Font("Serif", Font.BOLD, 25));
         jTitle.setBorder(BorderFactory.createEmptyBorder(20, 0, 10, 0));
         jTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
 
@@ -48,12 +54,11 @@ public class File_Server {
         jFrame.add(jScrollPane);
         jFrame.setVisible(true);
 
-        ServerSocket serverSocket;
         serverSocket = new ServerSocket(1234);
 
         while (true) {
             try {
-                Socket socket = serverSocket.accept();
+                socket = serverSocket.accept();
                 DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
 
                 int fileNameLength = dataInputStream.readInt();
@@ -107,6 +112,13 @@ public class File_Server {
         }
 
     }
+
+    // private static int close() throws IOException {
+    // socket.close();
+    // serverSocket.close();
+    // System.exit(0);
+    // return 0;
+    // }
 
     private static MouseListener getMyMouseListener() {
         return new MouseListener() {
