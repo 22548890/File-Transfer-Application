@@ -54,31 +54,32 @@ public class File_Server {
         jFrame.add(jScrollPane);
         jFrame.setVisible(true);
 
-        serverSocket = new ServerSocket(1234);
+        String port = JOptionPane.showInputDialog("Enter the port number: ", "1234");
+        serverSocket = new ServerSocket(Integer.parseInt(port));
 
         while (true) {
             try {
                 socket = serverSocket.accept();
-                DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
+                DataInputStream dIn = new DataInputStream(socket.getInputStream());
 
-                int fileNameLength = dataInputStream.readInt();
+                int fileNameLength = dIn.readInt();
 
                 if (fileNameLength > 0) {
                     byte[] bytes = new byte[fileNameLength];
-                    dataInputStream.readFully(bytes, 0, bytes.length);
+                    dIn.readFully(bytes, 0, bytes.length);
                     String fileName = new String(bytes);
 
-                    int fileSize = dataInputStream.readInt();
+                    int fileSize = dIn.readInt();
 
                     if (fileSize > 0) {
                         byte[] fileBytes = new byte[fileSize];
-                        dataInputStream.readFully(fileBytes, 0, fileBytes.length);
+                        dIn.readFully(fileBytes, 0, fileBytes.length);
 
                         JPanel jpFileRow = new JPanel();
                         jpFileRow.setLayout(new BoxLayout(jpFileRow, BoxLayout.Y_AXIS));
 
                         JLabel jlFileName = new JLabel(fileName);
-                        jlFileName.setFont(new Font("Arial", Font.BOLD, 15));
+                        jlFileName.setFont(new Font("Arial", Font.PLAIN, 15));
                         jlFileName.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
                         jlFileName.setAlignmentX(Component.CENTER_ALIGNMENT);
 
@@ -210,9 +211,9 @@ public class File_Server {
                 File fileToDownload = new File(fileName);
 
                 try {
-                    FileOutputStream fileOutputStream = new FileOutputStream(fileToDownload);
-                    fileOutputStream.write(fileData);
-                    fileOutputStream.close();
+                    FileOutputStream fileOut = new FileOutputStream(fileToDownload);
+                    fileOut.write(fileData);
+                    fileOut.close();
 
                     jFrame.dispose();
                 } catch (IOException e1) {
