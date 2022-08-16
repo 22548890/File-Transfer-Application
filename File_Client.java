@@ -26,7 +26,7 @@ public class File_Client {
 
         jframe.setSize(500, 350);
         jframe.setLayout(new BoxLayout(jframe.getContentPane(), BoxLayout.Y_AXIS));
-        jframe.setDefaultCloseOperation(jframe.EXIT_ON_CLOSE);
+        jframe.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
         JLabel jTitle = new JLabel("File Transfer Sender");
         jTitle.setFont(new Font("Serif", Font.BOLD, 25));
@@ -59,6 +59,16 @@ public class File_Client {
         jpButton.add(btnSendTCP);
         jpButton.add(btnSendUDP);
 
+        // start GUI
+        String ip = JOptionPane.showInputDialog("Enter the IP address: ", "localhost");
+        if (ip == null) {
+            System.exit(0);
+        }
+        String port = JOptionPane.showInputDialog("Enter the port number: ", "1234");
+        if (port == null) {
+            System.exit(0);
+        }
+
         btnChooseFile.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -80,14 +90,7 @@ public class File_Client {
                     JFileName.setText("Please choose a file first.");
                 } else {
                     try {
-                        String ip = JOptionPane.showInputDialog("Enter the IP address: ", "localhost");
-                        if (ip == null) {
-                            System.exit(0);
-                        }
-                        String port = JOptionPane.showInputDialog("Enter the port number: ", "1234");
-                        if (port == null) {
-                            System.exit(0);
-                        }
+
                         // Timeout timeout = new Timeout();
                         // Thread t = new Thread(timeout);
                         // t.start();
