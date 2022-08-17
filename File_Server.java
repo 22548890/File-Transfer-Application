@@ -79,7 +79,7 @@ public class File_Server {
             public void actionPerformed(ActionEvent e) {
                 // TODO Auto-generated method stub
                 JOptionPane.showMessageDialog(null, "To change you have to restart application");
-
+                b.setValue(0);
             }
         });
 
@@ -139,7 +139,7 @@ public class File_Server {
                             }
                             myFiles.add(new MyFile(fileId, fileName, fileBytes, getFileExtension(fileName)));
                             fileId++;
-
+                            b.setValue(100);
                             // serverSocket.close();
                         }
                     }

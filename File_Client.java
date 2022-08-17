@@ -54,11 +54,11 @@ public class File_Client {
         JPanel jpButton = new JPanel();
         jpButton.setBorder(BorderFactory.createEmptyBorder(70, 0, 10, 0));
 
-        JButton btnSendTCP = new JButton("Send File through TCP");
+        JButton btnSendTCP = new JButton("Send TCP");
         btnSendTCP.setFont(new Font("Serif", Font.BOLD, 12));
         btnSendTCP.setPreferredSize(new Dimension(155, 75));
 
-        JButton btnSendUDP = new JButton("Send File through UDP");
+        JButton btnSendUDP = new JButton("Send UDP");
         btnSendUDP.setFont(new Font("Serif", Font.BOLD, 12));
         btnSendUDP.setPreferredSize(new Dimension(155, 75));
 
@@ -152,7 +152,7 @@ public class File_Client {
                     try {
                         // udp tings
                         sender.send();
-                        btnSendUDP.setText("Sending...");
+                        btnSendUDP.setText("Sent");
                         btnSendUDP.setEnabled(false);
                     } catch (Exception ex) {
                         ex.printStackTrace();
@@ -248,20 +248,20 @@ public class File_Client {
         }
 
         // for (int i = 1; i < packets.size(); i++) {
-        //     System.out.println(i);
-        //     dsocket.send(packets.get(i - 1));
-        //     if (i % 42 == 0) { // every multiple of 42
-        //         int[] toSend = new int[42];
-        //         System.out.println(i - 42);
-        //         System.arraycopy(seqNums, i - 42, toSend, 0, 42);
-        //         oos.writeObject(toSend);
-        //         oos.flush();
-        //     } else if (i == packets.size() - 1) { // final bunch of packets
-        //         int[] toSend = new int[i % 42];
-        //         System.arraycopy(seqNums, i - (i % 42), toSend, 0, i % 42);
-        //         oos.writeObject(toSend);
-        //         oos.flush();
-        //     }
+        // System.out.println(i);
+        // dsocket.send(packets.get(i - 1));
+        // if (i % 42 == 0) { // every multiple of 42
+        // int[] toSend = new int[42];
+        // System.out.println(i - 42);
+        // System.arraycopy(seqNums, i - 42, toSend, 0, 42);
+        // oos.writeObject(toSend);
+        // oos.flush();
+        // } else if (i == packets.size() - 1) { // final bunch of packets
+        // int[] toSend = new int[i % 42];
+        // System.arraycopy(seqNums, i - (i % 42), toSend, 0, i % 42);
+        // oos.writeObject(toSend);
+        // oos.flush();
+        // }
         // }
         // dsocket.send(packets.get(packets.size() - 1)); // final packet
 
@@ -269,7 +269,7 @@ public class File_Client {
         int i = 0;
         for (DatagramPacket packet : packets) {
             dsocket.send(packet);
-            toSend[i] = i+1;
+            toSend[i] = i + 1;
             i++;
         }
         oos.writeObject(toSend);
