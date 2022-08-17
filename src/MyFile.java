@@ -1,5 +1,3 @@
-package group_42;
-
 public class MyFile {
     private int id;
     private String name;
