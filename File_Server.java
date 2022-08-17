@@ -30,11 +30,12 @@ public class File_Server {
     private static ServerSocket serverSocket;
     private DatagramSocket dsocket;
     private int fileId = 0;
-    private JFrame jFrame;
-    private JPanel jPanel;
+    private static JFrame jFrame;
+    private static JPanel jPanel;
     private static String port;
+    static JProgressBar b;
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
 
         int fileId = 0;
         try {
@@ -42,12 +43,12 @@ public class File_Server {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        JFrame jFrame = new JFrame("File Transfer Server");
+        jFrame = new JFrame("File Transfer Server");
         jFrame.setSize(450, 450);
         jFrame.setLayout(new BoxLayout(jFrame.getContentPane(), BoxLayout.Y_AXIS));
         jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        JPanel jPanel = new JPanel();
+        jPanel = new JPanel();
         jPanel.setLayout(new BoxLayout(jPanel, BoxLayout.Y_AXIS));
 
         JScrollPane jScrollPane = new JScrollPane(jPanel);
@@ -64,6 +65,14 @@ public class File_Server {
         // btnChange.setBorder(BorderFactory.createEmptyBorder(20, 50, 0, 0));
         btnChange.setAlignmentX(Component.CENTER_ALIGNMENT);
 
+        b = new JProgressBar();
+        btnChange.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        // set initial value
+        b.setValue(0);
+
+        b.setStringPainted(true);
+
         btnChange.addActionListener(new ActionListener() {
 
             @Override
@@ -76,6 +85,7 @@ public class File_Server {
 
         jFrame.add(jTitle);
         jFrame.add(btnChange);
+        jFrame.add(b);
         jFrame.add(jScrollPane);
         jFrame.setVisible(true);
 
@@ -292,7 +302,7 @@ public class File_Server {
         return fileName.substring(dotIndex + 1);
     }
 
-    public void receive() throws IOException, ClassNotFoundException {
+    public void receive() throws IOException, ClassNotFoundException, InterruptedException {
         int udpport = 1345;
 
         // setting up socket for tcp communications
@@ -316,6 +326,8 @@ public class File_Server {
             byte[] packetBytes = new byte[1024];
             DatagramPacket packet = new DatagramPacket(packetBytes, packetBytes.length);
             dsocket.receive(packet);
+            float val = ((float) i + 1 / (float) filesize) * 100;
+            b.setValue((int) val);
 
             if ((packetBytes[2] & 0xff) == 1) { // end of file reached
                 System.arraycopy(packetBytes, 3, fileBytes, i, filesize - i);
@@ -331,49 +343,47 @@ public class File_Server {
         // int i = 0;
         // int count = 0;
         // while (true) {
-        //     try {
-        //         byte[] packetBytes = new byte[1024];
-        //         DatagramPacket packet = new DatagramPacket(packetBytes, packetBytes.length);
-        //         dsocket.setSoTimeout(50);
-        //         dsocket.receive(packet);
-                
-        //         if ((packetBytes[2] & 0xff) == 0) {
-        //             blastPacketsBytes.add(packetBytes);
-        //         }
-        //         count++;
+        // try {
+        // byte[] packetBytes = new byte[1024];
+        // DatagramPacket packet = new DatagramPacket(packetBytes, packetBytes.length);
+        // dsocket.setSoTimeout(50);
+        // dsocket.receive(packet);
 
-        //         if (count%42 == 0) {
-        //             int[] seqNums = (int[]) ois.readObject();
-        //             for (byte[] b : blastPacketsBytes) { 
-        //                 System.out.println(((b[0] & 0xff) << 8) + (b[1] & 0xff));
-        //                 System.arraycopy(b, 3, fileBytes, i, 1021);  
-        //                 i += 1021;
-        //             }
-        //             System.out.println();
-        //             blastPacketsBytes = new ArrayList<byte[]>();
-        //         }
-        //     } catch (SocketTimeoutException e) {
-        //         System.out.println("TIMEOUT");
-        //         System.out.println("i = " + i + " size = " + (filesize - filesize%1021));
-        //         int[] seqNums = (int[]) ois.readObject();
-                
-        //         for (byte[] b : blastPacketsBytes) {
-        //             System.out.println(((b[0] & 0xff) << 8) + (b[1] & 0xff));
-        //             System.arraycopy(b, 3, fileBytes, i, 1021);  
-        //             i += 1021;
-                    
-        //         }
-        //         System.out.println();
-        //         break;
-        //     }
+        // if ((packetBytes[2] & 0xff) == 0) {
+        // blastPacketsBytes.add(packetBytes);
+        // }
+        // count++;
+
+        // if (count%42 == 0) {
+        // int[] seqNums = (int[]) ois.readObject();
+        // for (byte[] b : blastPacketsBytes) {
+        // System.out.println(((b[0] & 0xff) << 8) + (b[1] & 0xff));
+        // System.arraycopy(b, 3, fileBytes, i, 1021);
+        // i += 1021;
+        // }
+        // System.out.println();
+        // blastPacketsBytes = new ArrayList<byte[]>();
+        // }
+        // } catch (SocketTimeoutException e) {
+        // System.out.println("TIMEOUT");
+        // System.out.println("i = " + i + " size = " + (filesize - filesize%1021));
+        // int[] seqNums = (int[]) ois.readObject();
+
+        // for (byte[] b : blastPacketsBytes) {
+        // System.out.println(((b[0] & 0xff) << 8) + (b[1] & 0xff));
+        // System.arraycopy(b, 3, fileBytes, i, 1021);
+        // i += 1021;
+
+        // }
+        // System.out.println();
+        // break;
+        // }
         // }
         // byte[] packetBytes = new byte[1024];
         // DatagramPacket packet = new DatagramPacket(packetBytes, packetBytes.length);
         // dsocket.receive(packet);
         // System.arraycopy(packetBytes, 3, fileBytes, i, filesize%42);
 
-
-        
         JPanel jpFileRow = new JPanel();
         jpFileRow.setLayout(new BoxLayout(jpFileRow, BoxLayout.Y_AXIS));
 
