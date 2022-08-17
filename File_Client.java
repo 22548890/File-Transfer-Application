@@ -104,7 +104,7 @@ public class File_Client {
                             byte[] fileNameBytes = fileName.getBytes();
 
                             byte[] fileContentBytes = new byte[(int) fileToSend[0].length()];
-                            fileIn.read(fileNameBytes);
+                            fileIn.read(fileContentBytes);
 
                             dOut.writeInt(fileNameBytes.length);
                             dOut.write(fileNameBytes);

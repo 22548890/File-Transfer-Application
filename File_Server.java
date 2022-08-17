@@ -68,7 +68,6 @@ public class File_Server {
                     byte[] bytes = new byte[fileNameLength];
                     dIn.readFully(bytes, 0, bytes.length);
                     String fileName = new String(bytes);
-
                     int fileSize = dIn.readInt();
 
                     if (fileSize > 0) {
@@ -166,27 +165,27 @@ public class File_Server {
     public static JFrame createFrame(String fileName, byte[] fileData, String fileExtension) {
 
         JFrame jFrame = new JFrame("File Preview Downloader");
-        jFrame.setSize(450, 450);
+        jFrame.setSize(600, 200);
 
         JPanel jPanel = new JPanel();
         jPanel.setLayout(new BoxLayout(jPanel, BoxLayout.Y_AXIS));
 
         JLabel jTitle = new JLabel("File Preview Downloader");
-        jTitle.setFont(new Font("Arial", Font.BOLD, 25));
+        jTitle.setFont(new Font("Serif", Font.BOLD, 25));
         jTitle.setBorder(BorderFactory.createEmptyBorder(20, 0, 10, 0));
         jTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JLabel jlPrompt = new JLabel("Confirm to download ->" + fileName);
-        jlPrompt.setFont(new Font("Arial", Font.BOLD, 18));
+        jlPrompt.setFont(new Font("Serif", Font.PLAIN, 16));
         jlPrompt.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
 
         JButton jbDownload = new JButton("Download");
-        jbDownload.setPreferredSize(new Dimension(150, 75));
-        jbDownload.setFont(new Font("Arial", Font.BOLD, 18));
+        jbDownload.setPreferredSize(new Dimension(100, 50));
+        jbDownload.setFont(new Font("Serif", Font.BOLD, 14));
 
         JButton jbCancel = new JButton("Cancel");
-        jbCancel.setPreferredSize(new Dimension(150, 75));
-        jbCancel.setFont(new Font("Arial", Font.BOLD, 18));
+        jbCancel.setPreferredSize(new Dimension(100, 50));
+        jbCancel.setFont(new Font("Serif", Font.BOLD, 14));
 
         JLabel jlFileContent = new JLabel();
         jlFileContent.setAlignmentX(Component.CENTER_ALIGNMENT);
