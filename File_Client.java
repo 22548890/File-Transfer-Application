@@ -4,7 +4,15 @@ import java.awt.Font;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.Socket;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import java.awt.*;
 import java.awt.event.*;
@@ -14,6 +22,13 @@ import javax.swing.*;
  * File_Client
  */
 public class File_Client {
+    DatagramSocket dsocket;
+    InetAddress address;
+    File file;
+    String host;
+    static String port;
+    static Socket socket;
+    static String ip;
 
     public static void main(String[] args) {
         final File[] fileToSend = new File[1];
@@ -26,7 +41,7 @@ public class File_Client {
 
         jframe.setSize(500, 350);
         jframe.setLayout(new BoxLayout(jframe.getContentPane(), BoxLayout.Y_AXIS));
-        jframe.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        jframe.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
         JLabel jTitle = new JLabel("File Transfer Sender");
         jTitle.setFont(new Font("Serif", Font.BOLD, 25));
@@ -60,15 +75,15 @@ public class File_Client {
         jpButton.add(btnSendUDP);
 
         // start GUI
-        String ip = JOptionPane.showInputDialog("Enter the IP address: ", "localhost");
+        ip = JOptionPane.showInputDialog("Enter the IP address: ", "localhost");
         if (ip == null) {
             System.exit(0);
         }
-        String port = JOptionPane.showInputDialog("Enter the port number: ", "1234");
+        port = JOptionPane.showInputDialog("Enter the port number: ", "1234");
         if (port == null) {
             System.exit(0);
         }
-
+        File_Client sender = new File_Client();
         btnChooseFile.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -77,6 +92,7 @@ public class File_Client {
 
                 if (jFileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
                     fileToSend[0] = jFileChooser.getSelectedFile();
+                    sender.file = jFileChooser.getSelectedFile();
                     JFileName.setText("The file you want to send it: " + fileToSend[0].getName());
                 }
             }
@@ -94,7 +110,7 @@ public class File_Client {
                         // Timeout timeout = new Timeout();
                         // Thread t = new Thread(timeout);
                         // t.start();
-                        Socket socket = new Socket(ip, Integer.parseInt(port));
+                        socket = new Socket(ip, Integer.parseInt(port));
                         // t.interrupt();
                         FileInputStream fileIn = new FileInputStream(fileToSend[0].getAbsolutePath());
                         if (socket.isConnected()) {
@@ -119,8 +135,10 @@ public class File_Client {
                                 "SERVER NOT FOUND", JOptionPane.ERROR_MESSAGE);
                         JFileName.setText("Please connect to the server first.");
                     }
+                    JFileName.setText("File: " + fileToSend[0].getName() + " was sent through TCP");
 
                 }
+
             }
 
         });
@@ -130,11 +148,12 @@ public class File_Client {
             public void actionPerformed(ActionEvent e) {
                 // btnSendUDP.setText("Send File through UDP");
                 // btnSendUDP.setEnabled(true);
-                if (fileToSend[0] == null) {
+                if (sender.file == null) {
                     JFileName.setText("Please choose a file first.");
                 } else {
                     try {
                         // udp tings
+                        sender.send();
                         btnSendUDP.setText("Sending...");
                         btnSendUDP.setEnabled(false);
                     } catch (Exception ex) {
@@ -145,11 +164,108 @@ public class File_Client {
             }
         });
 
+        jframe.addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent e) {
+                try {
+                    sender.dsocket.close();
+                    socket.close();
+                } catch (Exception er) {
+                    // TODO: handle exception
+                }
+
+                System.exit(0);
+            }
+        });
+
         jframe.add(jTitle);
         jframe.add(JFileName);
         jframe.add(jpButton);
         jframe.setVisible(true);
 
+    }
+
+    public void send() throws UnknownHostException, IOException {
+        String tcphost = ip;
+        int tcpport = Integer.parseInt(port);
+
+        String udphost = JOptionPane.showInputDialog("UDP: Enter the IP address: ", "localhost");
+
+        int udpport = Integer.parseInt(JOptionPane.showInputDialog("UDP: Enter the port number: ", "1345"));
+
+        // String udphost = "localhost";
+        // int udpport = 1345;
+
+        // setting up socket for tcp communications
+        Socket tcpsocket = new Socket(tcphost, tcpport);
+        ObjectOutputStream oos = new ObjectOutputStream(tcpsocket.getOutputStream());
+        ObjectInputStream ois = new ObjectInputStream(tcpsocket.getInputStream());
+
+        // sending filename and size over tcp
+        String filename = file.getName();
+        oos.writeObject(filename);
+        oos.flush();
+        int filesize = (int) file.length();
+        oos.writeInt(filesize);
+        oos.flush();
+
+        // setting up socket for udp communications
+        dsocket = new DatagramSocket();
+        address = InetAddress.getByName(udphost);
+
+        // convert file into byte array
+        FileInputStream fis = null;
+        byte[] fileBytes = new byte[filesize];
+        try {
+            fis = new FileInputStream(file);
+            fis.read(fileBytes);
+            fis.close();
+        } catch (IOException e) {
+            System.out.println("Error when converting file to byte array");
+            System.exit(0);
+        }
+
+        ArrayList<DatagramPacket> packets = new ArrayList<DatagramPacket>();
+        int[] seqNums = new int[filesize / 1021 + 1];
+        int seqNum = 0;
+        // read file into datagram packets
+        for (int i = 0; i < filesize; i += 1021) {
+            seqNum++;
+            seqNums[seqNum - 1] = seqNum;
+            byte[] packetBytes = new byte[1024];
+
+            // add unqiue sequence number (starting at 1)
+            packetBytes[0] = (byte) (seqNum >> 8);
+            packetBytes[1] = (byte) (seqNum);
+
+            if (i + 1021 >= filesize) { // if end of file is reached
+                packetBytes[2] = (byte) (1);
+                System.arraycopy(fileBytes, i, packetBytes, 3, filesize - i);
+            } else {
+                packetBytes[2] = (byte) (0);
+                System.arraycopy(fileBytes, i, packetBytes, 3, 1021);
+            }
+
+            DatagramPacket packet = new DatagramPacket(packetBytes, packetBytes.length, address, udpport);
+            packets.add(packet);
+        }
+
+        for (int i = 1; i < packets.size(); i++) {
+            System.out.println(i);
+            dsocket.send(packets.get(i - 1));
+            if (i % 42 == 0) { // every multiple of 42
+                int[] toSend = new int[42];
+                System.out.println(i - 42);
+                System.arraycopy(seqNums, i - 42, toSend, 0, 42);
+                oos.writeObject(toSend);
+                oos.flush();
+            } else if (i == packets.size() - 1) { // final bunch of packets
+                int[] toSend = new int[i % 42];
+                System.arraycopy(seqNums, i - (i % 42), toSend, 0, i % 42);
+                oos.writeObject(toSend);
+                oos.flush();
+            }
+        }
+        dsocket.send(packets.get(packets.size() - 1)); // final packet
     }
 
 }
