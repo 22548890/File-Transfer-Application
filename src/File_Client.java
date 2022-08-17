@@ -118,22 +118,23 @@ public class File_Client {
             packets.add(packet); 
         }
 
-        System.out.println(packets.size());
-        for (int i = 1; i <= packets.size(); i++) {
+        for (int i = 1; i < packets.size(); i++) {
+            System.out.println(i);
             dsocket.send(packets.get(i-1));
             if (i%42 == 0) { // every multiple of 42
                 int[] toSend = new int[42];
+                System.out.println(i-42);
                 System.arraycopy(seqNums, i-42, toSend, 0, 42);
                 oos.writeObject(toSend);
                 oos.flush();
-            } else if (i == packets.size()) { // final bunch of packets
-                System.out.println("HAhahahah");
-                int[] toSend = new int[packets.size()%42];
+            } else if (i == packets.size()-1) { // final bunch of packets
+                int[] toSend = new int[i%42];
                 System.arraycopy(seqNums, i-(i%42), toSend, 0, i%42);
                 oos.writeObject(toSend);
                 oos.flush();
             }
         }
+        dsocket.send(packets.get(packets.size()-1)); // final packet
 
        
         // testing sending all packets

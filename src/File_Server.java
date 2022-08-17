@@ -200,56 +200,46 @@ public class File_Server {
 
         byte[] fileBytes = new byte[filesize];
         ArrayList<byte[]> blastPacketsBytes = new ArrayList<byte[]>();
-        boolean eof = false;
         int i = 0;
         int count = 0;
-        while (!eof) {
-            byte[] packetBytes = new byte[1024];
-            DatagramPacket packet = new DatagramPacket(packetBytes, packetBytes.length);
+        while (i < filesize - filesize%1021) {
             try {
-                dsocket.setSoTimeout(50);
+                byte[] packetBytes = new byte[1024];
+                DatagramPacket packet = new DatagramPacket(packetBytes, packetBytes.length);
+                dsocket.setSoTimeout(100);
                 dsocket.receive(packet);
                 blastPacketsBytes.add(packetBytes);
                 count++;
 
                 if (count%42 == 0) {
                     int[] seqNums = (int[]) ois.readObject();
-                    for (int n : seqNums) {
-                        System.out.println(n);
+                    for (byte[] b : blastPacketsBytes) { 
+                        System.out.println(((b[0] & 0xff) << 8) + (b[1] & 0xff));
+                        System.arraycopy(b, 3, fileBytes, i, 1021);  
+                        i += 1021;
                     }
                     System.out.println();
+                    blastPacketsBytes = new ArrayList<byte[]>();
                 }
-                for (byte[] b : blastPacketsBytes) {
-                    System.arraycopy(b, 3, fileBytes, i, 1021);
-                    i += 1021;    
-                }
-                blastPacketsBytes = new ArrayList<byte[]>();
             } catch (SocketTimeoutException e) {
                 System.out.println("TIMEOUT");
+                System.out.println("i = " + i + " size = " + (filesize - filesize%1021));
                 int[] seqNums = (int[]) ois.readObject();
-                for (int n : seqNums) {
-                    System.out.println(n);
+                
+                for (byte[] b : blastPacketsBytes) {
+                    System.out.println(((b[0] & 0xff) << 8) + (b[1] & 0xff));
+                    System.arraycopy(b, 3, fileBytes, i, 1021);  
+                    i += 1021;
+                    
                 }
                 System.out.println();
-
-                for (byte[] b : blastPacketsBytes) {
-                    System.arraycopy(b, 3, fileBytes, i, filesize-i);
-                    i += 1021;    
-                }
-                eof = true;
-
-                // for (byte[] b : blastPacketsBytes) {
-                //     eof = (b[2] & 0xff) == 1;
-                //     if (eof) {
-                //         System.arraycopy(b, 3, fileBytes, i, filesize-i);
-                //     } else {
-                //         System.arraycopy(b, 3, fileBytes, i, 1021);
-                //         i += 1021;
-                //     }
-                // }
             }
-            
         }
+        byte[] packetBytes = new byte[1024];
+        DatagramPacket packet = new DatagramPacket(packetBytes, packetBytes.length);
+        dsocket.receive(packet);
+        System.arraycopy(packetBytes, 3, fileBytes, i, filesize%42);
+
 
         // testing receiving all packets 
         // --------------------------------------------------------------------------
