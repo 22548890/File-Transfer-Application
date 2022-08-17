@@ -1,5 +1,3 @@
-package group_42;
-
 import java.awt.Font;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -186,11 +184,11 @@ public class File_Client {
 
     public void send() throws UnknownHostException, IOException {
         String tcphost = ip;
-        int tcpport = Integer.parseInt(port);
+        int tcpport = 1234;
 
         String udphost = JOptionPane.showInputDialog("UDP: Enter the IP address: ", "localhost");
 
-        int udpport = Integer.parseInt(JOptionPane.showInputDialog("UDP: Enter the port number: ", "1345"));
+        int udpport = 1345;
 
         // String udphost = "localhost";
         // int udpport = 1345;
@@ -249,23 +247,33 @@ public class File_Client {
             packets.add(packet);
         }
 
-        for (int i = 1; i < packets.size(); i++) {
-            System.out.println(i);
-            dsocket.send(packets.get(i - 1));
-            if (i % 42 == 0) { // every multiple of 42
-                int[] toSend = new int[42];
-                System.out.println(i - 42);
-                System.arraycopy(seqNums, i - 42, toSend, 0, 42);
-                oos.writeObject(toSend);
-                oos.flush();
-            } else if (i == packets.size() - 1) { // final bunch of packets
-                int[] toSend = new int[i % 42];
-                System.arraycopy(seqNums, i - (i % 42), toSend, 0, i % 42);
-                oos.writeObject(toSend);
-                oos.flush();
-            }
+        // for (int i = 1; i < packets.size(); i++) {
+        //     System.out.println(i);
+        //     dsocket.send(packets.get(i - 1));
+        //     if (i % 42 == 0) { // every multiple of 42
+        //         int[] toSend = new int[42];
+        //         System.out.println(i - 42);
+        //         System.arraycopy(seqNums, i - 42, toSend, 0, 42);
+        //         oos.writeObject(toSend);
+        //         oos.flush();
+        //     } else if (i == packets.size() - 1) { // final bunch of packets
+        //         int[] toSend = new int[i % 42];
+        //         System.arraycopy(seqNums, i - (i % 42), toSend, 0, i % 42);
+        //         oos.writeObject(toSend);
+        //         oos.flush();
+        //     }
+        // }
+        // dsocket.send(packets.get(packets.size() - 1)); // final packet
+
+        int[] toSend = new int[packets.size()];
+        int i = 0;
+        for (DatagramPacket packet : packets) {
+            dsocket.send(packet);
+            toSend[i] = i+1;
+            i++;
         }
-        dsocket.send(packets.get(packets.size() - 1)); // final packet
+        oos.writeObject(toSend);
+        oos.flush();
     }
 
 }

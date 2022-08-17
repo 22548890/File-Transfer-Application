@@ -1,5 +1,3 @@
-package group_42;
-
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.File;
@@ -295,10 +293,10 @@ public class File_Server {
     }
 
     public void receive() throws IOException, ClassNotFoundException {
-        int udpport = Integer.parseInt(JOptionPane.showInputDialog("UDP: Enter the port number: ", "1345"));
+        int udpport = 1345;
 
         // setting up socket for tcp communications
-        serverSocket = new ServerSocket(Integer.parseInt(port));
+        serverSocket = new ServerSocket(1234);
         Socket tcpsocket = serverSocket.accept();
         ObjectOutputStream oos = new ObjectOutputStream(tcpsocket.getOutputStream());
         ObjectInputStream ois = new ObjectInputStream(tcpsocket.getInputStream());
@@ -310,62 +308,72 @@ public class File_Server {
         // setting up socket for udp communications
         dsocket = new DatagramSocket(udpport);
 
+        ServerListener listener = new ServerListener(tcpsocket, oos, ois);
+        Thread thread = new Thread(listener);
+        thread.start();
         byte[] fileBytes = new byte[filesize];
-        ArrayList<byte[]> blastPacketsBytes = new ArrayList<byte[]>();
-        int i = 0;
-        int count = 0;
-        while (i < filesize - filesize % 1021) {
-            try {
-                byte[] packetBytes = new byte[1024];
-                DatagramPacket packet = new DatagramPacket(packetBytes, packetBytes.length);
-                dsocket.setSoTimeout(100);
-                dsocket.receive(packet);
-                blastPacketsBytes.add(packetBytes);
-                count++;
+        for (int i = 0; i < filesize; i += 1021) {
+            byte[] packetBytes = new byte[1024];
+            DatagramPacket packet = new DatagramPacket(packetBytes, packetBytes.length);
+            dsocket.receive(packet);
 
-                if (count % 42 == 0) {
-                    int[] seqNums = (int[]) ois.readObject();
-                    for (byte[] b : blastPacketsBytes) {
-                        System.out.println(((b[0] & 0xff) << 8) + (b[1] & 0xff));
-                        System.arraycopy(b, 3, fileBytes, i, 1021);
-                        i += 1021;
-                    }
-                    System.out.println();
-                    blastPacketsBytes = new ArrayList<byte[]>();
-                }
-            } catch (SocketTimeoutException e) {
-                System.out.println("TIMEOUT");
-                System.out.println("i = " + i + " size = " + (filesize - filesize % 1021));
-                int[] seqNums = (int[]) ois.readObject();
-
-                for (byte[] b : blastPacketsBytes) {
-                    System.out.println(((b[0] & 0xff) << 8) + (b[1] & 0xff));
-                    System.arraycopy(b, 3, fileBytes, i, 1021);
-                    i += 1021;
-
-                }
-                System.out.println();
+            if ((packetBytes[2] & 0xff) == 1) { // end of file reached
+                System.arraycopy(packetBytes, 3, fileBytes, i, filesize - i);
+            } else {
+                System.arraycopy(packetBytes, 3, fileBytes, i, 1021);
             }
         }
-        byte[] packetBytes = new byte[1024];
-        DatagramPacket packet = new DatagramPacket(packetBytes, packetBytes.length);
-        dsocket.receive(packet);
-        System.arraycopy(packetBytes, 3, fileBytes, i, filesize % 42);
 
-        // testing receiving all packets
-        // --------------------------------------------------------------------------
+        int[] seqNUmsSent = listener.getSeqNumsSent();
+
         // byte[] fileBytes = new byte[filesize];
-        // for (int i = 0; i < filesize; i += 1021) {
+        // ArrayList<byte[]> blastPacketsBytes = new ArrayList<byte[]>();
+        // int i = 0;
+        // int count = 0;
+        // while (true) {
+        //     try {
+        //         byte[] packetBytes = new byte[1024];
+        //         DatagramPacket packet = new DatagramPacket(packetBytes, packetBytes.length);
+        //         dsocket.setSoTimeout(50);
+        //         dsocket.receive(packet);
+                
+        //         if ((packetBytes[2] & 0xff) == 0) {
+        //             blastPacketsBytes.add(packetBytes);
+        //         }
+        //         count++;
+
+        //         if (count%42 == 0) {
+        //             int[] seqNums = (int[]) ois.readObject();
+        //             for (byte[] b : blastPacketsBytes) { 
+        //                 System.out.println(((b[0] & 0xff) << 8) + (b[1] & 0xff));
+        //                 System.arraycopy(b, 3, fileBytes, i, 1021);  
+        //                 i += 1021;
+        //             }
+        //             System.out.println();
+        //             blastPacketsBytes = new ArrayList<byte[]>();
+        //         }
+        //     } catch (SocketTimeoutException e) {
+        //         System.out.println("TIMEOUT");
+        //         System.out.println("i = " + i + " size = " + (filesize - filesize%1021));
+        //         int[] seqNums = (int[]) ois.readObject();
+                
+        //         for (byte[] b : blastPacketsBytes) {
+        //             System.out.println(((b[0] & 0xff) << 8) + (b[1] & 0xff));
+        //             System.arraycopy(b, 3, fileBytes, i, 1021);  
+        //             i += 1021;
+                    
+        //         }
+        //         System.out.println();
+        //         break;
+        //     }
+        // }
         // byte[] packetBytes = new byte[1024];
         // DatagramPacket packet = new DatagramPacket(packetBytes, packetBytes.length);
         // dsocket.receive(packet);
+        // System.arraycopy(packetBytes, 3, fileBytes, i, filesize%42);
 
-        // if ((packetBytes[2] & 0xff) == 1) { // end of file reached
-        // System.arraycopy(packetBytes, 3, fileBytes, i, filesize - i);
-        // } else {
-        // System.arraycopy(packetBytes, 3, fileBytes, i, 1021);
-        // }
-        // }
+
+        
         JPanel jpFileRow = new JPanel();
         jpFileRow.setLayout(new BoxLayout(jpFileRow, BoxLayout.Y_AXIS));
 
@@ -393,7 +401,6 @@ public class File_Server {
 
         myFiles.add(new MyFile(fileId, filename, fileBytes, getFileExtension(filename)));
         fileId++;
-        // --------------------------------------------------------------------------
     }
 
 }
